@@ -391,22 +391,9 @@ with right:
         # Display prediction
         # ----------------------------------------------------
 
-        st.markdown(
-            f"""
-            <div class="result">
+        st.markdown("### 🩺 Prediction Result")
 
-                <div class="result-title">
-                    Predicted Disease
-                </div>
-
-                <div class="result-disease">
-                    {disease}
-                </div>
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        st.info(f"🌱 **Predicted Disease:** {disease}")
 
         # ----------------------------------------------------
         # Confidence

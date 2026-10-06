@@ -22,51 +22,96 @@ st.set_page_config(
 st.markdown("""
 <style>
 
-.main {
-    background-color: #f7f9f5;
-}
+    /* Main background */
+    .stApp {
+        background-color: #f7f9f5;
+    }
 
-.title {
-    text-align: center;
-    font-size: 42px;
-    font-weight: 700;
-    color: #214d32;
-    margin-bottom: 5px;
-}
+    /* Main title */
+    .title {
+        text-align: center;
+        font-size: 42px;
+        font-weight: 700;
+        color: #214d32;
+        margin-top: 10px;
+        margin-bottom: 5px;
+    }
 
-.subtitle {
-    text-align: center;
-    font-size: 18px;
-    color: #657565;
-    margin-bottom: 35px;
-}
+    /* Subtitle */
+    .subtitle {
+        text-align: center;
+        font-size: 18px;
+        color: #657565;
+        margin-bottom: 35px;
+    }
 
-.card {
-    background-color: white;
-    padding: 25px;
-    border-radius: 18px;
-    box-shadow: 0px 4px 15px rgba(0,0,0,0.08);
-    margin-bottom: 20px;
-}
+    /* Card */
+    .card {
+        background-color: white;
+        padding: 25px;
+        border-radius: 18px;
+        border: 1px solid #e0e8e1;
+        box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.08);
+        margin-bottom: 20px;
+    }
 
-.result {
-    background-color: #e9f7ed;
-    padding: 25px;
-    border-radius: 18px;
-    text-align: center;
-    border: 1px solid #c8e6cf;
-}
+    /* Result card */
+    .result {
+        background-color: #e9f7ed;
+        padding: 30px;
+        border-radius: 18px;
+        text-align: center;
+        border: 1px solid #c8e6cf;
+        margin-top: 15px;
+        margin-bottom: 20px;
+    }
 
-.result-title {
-    color: #487052;
-    font-size: 18px;
-}
+    /* Result title */
+    .result-title {
+        color: #487052;
+        font-size: 18px;
+        margin-bottom: 8px;
+    }
 
-.result-disease {
-    color: #1d6334;
-    font-size: 32px;
-    font-weight: bold;
-}
+    /* Disease name */
+    .result-disease {
+        color: #1d6334;
+        font-size: 32px;
+        font-weight: bold;
+    }
+
+    /* Section heading */
+    .section-title {
+        color: #214d32;
+        font-size: 24px;
+        font-weight: 600;
+    }
+
+    /* Small information boxes */
+    .info-box {
+        background-color: white;
+        padding: 18px;
+        border-radius: 15px;
+        border: 1px solid #e0e8e1;
+        text-align: center;
+    }
+
+    /* Button */
+    div.stButton > button {
+        width: 100%;
+        border-radius: 10px;
+        border: none;
+        background-color: #2e7d4f;
+        color: white;
+        font-size: 17px;
+        font-weight: 600;
+        padding: 12px;
+    }
+
+    div.stButton > button:hover {
+        background-color: #245f3d;
+        color: white;
+    }
 
 </style>
 """, unsafe_allow_html=True)
@@ -83,6 +128,7 @@ def load_data():
         "crop_disease_sample_dataset.xlsx"
     )
 
+    # Remove missing values
     df = df.dropna()
 
     return df
@@ -98,14 +144,16 @@ df = load_data()
 @st.cache_resource
 def train_model(df):
 
+    # Features
     X = df.drop(
         "Disease",
         axis=1
     )
 
+    # Target
     y = df["Disease"]
 
-    # Encode categorical columns
+    # Convert categorical columns into numerical columns
     X = pd.get_dummies(X)
 
     # Train-test split
@@ -117,21 +165,22 @@ def train_model(df):
         stratify=y
     )
 
-    # Decision Tree
+    # Decision Tree Classifier
     model = DecisionTreeClassifier(
         max_depth=5,
         random_state=42
     )
 
+    # Train model
     model.fit(
         X_train,
         y_train
     )
 
-    return model, X
+    return model, X, X_test, y_test
 
 
-model, X = train_model(df)
+model, X, X_test, y_test = train_model(df)
 
 
 # ============================================================
@@ -145,7 +194,7 @@ st.markdown(
 
 st.markdown(
     '<div class="subtitle">'
-    'AI-powered crop disease prediction using Decision Tree Classifier'
+    'AI-powered crop disease prediction '
     '</div>',
     unsafe_allow_html=True
 )
@@ -162,7 +211,7 @@ left, right = st.columns(
 
 
 # ============================================================
-# INPUT SECTION
+# LEFT SIDE - INPUT
 # ============================================================
 
 with left:
@@ -172,9 +221,17 @@ with left:
         unsafe_allow_html=True
     )
 
-    st.subheader("🌿 Crop Information")
+    st.markdown(
+        '<div class="section-title">🌿 Crop Information</div>',
+        unsafe_allow_html=True
+    )
 
-    # Get unique crop values
+    st.write("")
+
+    # --------------------------------------------------------
+    # Crop
+    # --------------------------------------------------------
+
     crops = sorted(
         df["Crop"].unique()
     )
@@ -184,6 +241,10 @@ with left:
         crops
     )
 
+    # --------------------------------------------------------
+    # Temperature
+    # --------------------------------------------------------
+
     temperature = st.number_input(
         "Temperature (°C)",
         min_value=0.0,
@@ -191,6 +252,10 @@ with left:
         value=25.0,
         step=0.5
     )
+
+    # --------------------------------------------------------
+    # Humidity
+    # --------------------------------------------------------
 
     humidity = st.number_input(
         "Humidity (%)",
@@ -200,6 +265,10 @@ with left:
         step=1.0
     )
 
+    # --------------------------------------------------------
+    # Rainfall
+    # --------------------------------------------------------
+
     rainfall = st.number_input(
         "Rainfall (mm)",
         min_value=0.0,
@@ -207,6 +276,10 @@ with left:
         value=100.0,
         step=1.0
     )
+
+    # --------------------------------------------------------
+    # Leaf Color
+    # --------------------------------------------------------
 
     leaf_colors = sorted(
         df["Leaf_Color"].unique()
@@ -217,6 +290,10 @@ with left:
         leaf_colors
     )
 
+    # --------------------------------------------------------
+    # Spots
+    # --------------------------------------------------------
+
     spots = st.selectbox(
         "Are there spots on the leaf?",
         ["Yes", "No"]
@@ -224,10 +301,9 @@ with left:
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-
-    # ========================================================
-    # PREDICT BUTTON
-    # ========================================================
+    # --------------------------------------------------------
+    # Prediction button
+    # --------------------------------------------------------
 
     predict_button = st.button(
         "🔍 Predict Disease",
@@ -236,21 +312,24 @@ with left:
 
 
 # ============================================================
-# RESULT SECTION
+# RIGHT SIDE - RESULT
 # ============================================================
 
 with right:
 
     st.markdown(
-        '<div class="card">',
+        '<div class="section-title">🩺 Prediction Result</div>',
         unsafe_allow_html=True
     )
 
-    st.subheader("🩺 Prediction Result")
+    st.write("")
 
     if predict_button:
 
-        # Create user dataframe
+        # ----------------------------------------------------
+        # Create dataframe from user input
+        # ----------------------------------------------------
+
         user_data = pd.DataFrame({
 
             "Crop": [crop],
@@ -264,42 +343,53 @@ with right:
             "Leaf_Color": [leaf_color],
 
             "Spots": [spots]
+
         })
 
-
+        # ----------------------------------------------------
         # Encode user input
+        # ----------------------------------------------------
+
         user_encoded = pd.get_dummies(
             user_data
         )
 
-
+        # ----------------------------------------------------
         # Match training columns
+        # ----------------------------------------------------
+
         user_encoded = user_encoded.reindex(
             columns=X.columns,
             fill_value=0
         )
 
-
+        # ----------------------------------------------------
         # Prediction
+        # ----------------------------------------------------
+
         prediction = model.predict(
             user_encoded
         )
 
+        # ----------------------------------------------------
+        # Prediction probability
+        # ----------------------------------------------------
 
-        # Probability
         probability = model.predict_proba(
             user_encoded
         )
 
-
+        # Get disease
         disease = prediction[0]
 
+        # Get confidence
         confidence = max(
             probability[0]
         ) * 100
 
-
-        # Display result
+        # ----------------------------------------------------
+        # Display prediction
+        # ----------------------------------------------------
 
         st.markdown(
             f"""
@@ -318,16 +408,27 @@ with right:
             unsafe_allow_html=True
         )
 
-
-        st.write("")
+        # ----------------------------------------------------
+        # Confidence
+        # ----------------------------------------------------
 
         st.metric(
             "Prediction Confidence",
             f"{confidence:.2f}%"
         )
 
+        st.write("")
 
-        st.write("### 📊 Prediction Probabilities")
+        # ----------------------------------------------------
+        # Probability chart
+        # ----------------------------------------------------
+
+        st.markdown(
+            '<div class="section-title">'
+            '📊 Prediction Probabilities'
+            '</div>',
+            unsafe_allow_html=True
+        )
 
         probability_df = pd.DataFrame({
 
@@ -348,18 +449,12 @@ with right:
             )
         )
 
-
     else:
 
         st.info(
-            "Enter the crop information on the left "
+            "🌱 Enter the crop information on the left "
             "and click **Predict Disease**."
         )
-
-    st.markdown(
-        "</div>",
-        unsafe_allow_html=True
-    )
 
 
 # ============================================================
@@ -368,9 +463,15 @@ with right:
 
 st.divider()
 
-st.subheader("📊 Dataset Information")
+st.markdown(
+    '<div class="section-title">📊 Dataset Information</div>',
+    unsafe_allow_html=True
+)
+
+st.write("")
 
 col1, col2, col3 = st.columns(3)
+
 
 with col1:
 
@@ -379,6 +480,7 @@ with col1:
         len(df)
     )
 
+
 with col2:
 
     st.metric(
@@ -386,11 +488,67 @@ with col2:
         len(X.columns)
     )
 
+
 with col3:
 
     st.metric(
         "Disease Classes",
         df["Disease"].nunique()
+    )
+
+
+# ============================================================
+# MODEL INFORMATION
+# ============================================================
+
+st.divider()
+
+st.markdown(
+    '<div class="section-title">🤖 Model Information</div>',
+    unsafe_allow_html=True
+)
+
+st.write("")
+
+info1, info2, info3 = st.columns(3)
+
+
+with info1:
+
+    st.markdown(
+        """
+        <div class="info-box">
+            <b>Algorithm</b><br>
+            Decision Tree Classifier
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+
+with info2:
+
+    st.markdown(
+        """
+        <div class="info-box">
+            <b>Max Tree Depth</b><br>
+            5
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+
+with info3:
+
+    st.markdown(
+        f"""
+        <div class="info-box">
+            <b>Disease Classes</b><br>
+            {df["Disease"].nunique()}
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
 
